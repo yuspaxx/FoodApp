@@ -1,14 +1,27 @@
 import java.util.List;
 
 public class Recipe {
-    private String name;
-    private List<Ingredient> ingredients;
-    private String category;
 
-    public Recipe(String name, List<Ingredient> ingredients, String category) {
+    private int id;
+    private String name;
+    private String category;
+    private String instructions;
+    private List<Ingredient> ingredients;
+
+    public Recipe(int id, String name, String category, String instructions, List<Ingredient> ingredients) {
+        this.id = id;
         this.name = name;
-        this.ingredients = ingredients;
         this.category = category;
+        this.instructions = instructions;
+        this.ingredients = ingredients;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -19,14 +32,6 @@ public class Recipe {
         this.name = name;
     }
 
-    public List<Ingredient> getIngredients() {
-        return ingredients;
-    }
-
-    public void setIngredients(List<Ingredient> ingredients) {
-        this.ingredients = ingredients;
-    }
-
     public String getCategory() {
         return category;
     }
@@ -35,12 +40,30 @@ public class Recipe {
         this.category = category;
     }
 
+    public String getInstructions() {
+        return instructions;
+    }
+
+    public void setInstructions(String instructions) {
+        this.instructions = instructions;
+    }
+
+    public List<Ingredient> getIngredients() {
+        return ingredients;
+    }
+
+    public void setIngredients(List<Ingredient> ingredients) {
+        this.ingredients = ingredients;
+    }
+
     @Override
     public String toString() {
         return "Recipe{" +
-                "name='" + name + '\'' +
-                ", ingredients=" + ingredients +
+                "id=" + id +
+                ", name='" + name + '\'' +
                 ", category='" + category + '\'' +
+                ", instructions='" + instructions + '\'' +
+                ", ingredients=" + ingredients +
                 '}';
     }
 }
