@@ -22,16 +22,23 @@ public class RecipeDAO {
                 "category TEXT, " +
                 "instructions TEXT NOT NULL);";
 
+        String createRecipeIngredientsTable = "CREATE TABLE IF NOT EXISTS recipes_ingredients (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "recipe_id INTEGER, " +
+                "ingredient_id INTEGER, " +
+                "quantity INTEGER, " +
+                "FOREIGN KEY(recipe_id) REFERENCES recipes(id));"+
+                "FOREIGN KEY(ingredient_id) REFERENCES ingredients(id));";
+
         String createIngredientsTable = "CREATE TABLE IF NOT EXISTS ingredients (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "name TEXT NOT NULL, " +
-                "quantity TEXT, " +
-                "unit TEXT, " +
-                "recipe_id INTEGER, " +
-                "FOREIGN KEY(recipe_id) REFERENCES recipes(id));";
+                "quantity INTEGER, " +
+                "unit TEXT); ";
 
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
             stmt.execute(createRecipesTable);
+            stmt.execute(createRecipeIngredientsTable);
             stmt.execute(createIngredientsTable);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -44,19 +51,43 @@ public class RecipeDAO {
             stmt.setString(1, name);
             stmt.setString(2, category);
             stmt.setString(3, instructions);
+
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public static void insertIngredient(String name, String quantity, String unit, int recipeId) {
-        String query = "INSERT INTO ingredients(name, quantity, unit, recipe_id) VALUES(?, ?, ?, ?)";
+    public  static void insertRecipeIngredients(int recipe_ip, int ingredient_id, int quantity){
+        String query = "INSERT INTO recipes_ingredients(recipe_id, ingredient_id, quantity) VALUES(?, ?, ?)";
+        try (Connection conn = connect(); PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, recipe_ip);
+            stmt.setInt(2, ingredient_id);
+            stmt.setInt(3, quantity);
+
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void insertIngredient(String name, int quantity, String unit) {
+        String query = "insert into ingredients(name,quantity,unit) values(?, ?, ?)";
         try (Connection conn = connect(); PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, name);
-            stmt.setString(2, quantity);
+            stmt.setInt(2, quantity);
             stmt.setString(3, unit);
-            stmt.setInt(4, recipeId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void updateIngredient(String name, int quantity) {
+        String query = "Update ingredients set quantity = ? where name = ?";
+        try (Connection conn = connect(); PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, quantity);
+            stmt.setString(2, name);
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -65,15 +96,25 @@ public class RecipeDAO {
 
     public static List<Ingredient> getIngredientsForRecipe(int recipeId) {
         List<Ingredient> ingredients = new ArrayList<>();
-        String query = "SELECT * FROM ingredients WHERE recipe_id = ?";
+        String query = "SELECT * FROM recipes_ingredients WHERE recipe_id = ?";
         try (Connection conn = connect(); PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, recipeId);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 int id = rs.getInt("id");
                 String name = rs.getString("name");
-                String quantity = rs.getString("quantity");
-                String unit = rs.getString("unit");
+                int quantity = rs.getInt("quantity");
+
+                String unit = "";
+                String unit_query = "SELECT unit FROM ingredients WHERE name = ?";
+                try (Connection unit_conn = connect(); PreparedStatement unit_stmt = conn.prepareStatement(unit_query)) {
+                    unit_stmt.setString(1, name);
+                    ResultSet unit_rs = unit_stmt.executeQuery();
+                    unit = rs.getString("unit");
+                } catch (SQLException unit_e) {
+                    unit_e.printStackTrace();
+                }
+
                 ingredients.add(new Ingredient(id, name, quantity, unit));
             }
         } catch (SQLException e) {
@@ -106,7 +147,7 @@ public class RecipeDAO {
         String ingredientPlaceholders = String.join(",", ingredientNames);
         String query = "SELECT DISTINCT r.id, r.name, r.category, r.instructions " +
                 "FROM recipes r " +
-                "JOIN ingredients i ON r.id = i.recipe_id " +
+                "JOIN recipes_ingredients i ON r.id = i.recipe_id " +
                 "WHERE i.name IN (" + ingredientPlaceholders + ") GROUP BY r.id";
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery(query);
@@ -161,4 +202,39 @@ public class RecipeDAO {
         }
         return recipes;
     }
+
+    public static List<Ingredient> displayIngredients() {
+        List<Ingredient> ingredients = new ArrayList<>();
+        String query = "SELECT * FROM ingredients where quantity > 0";
+        try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(query);
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                int quantity = rs.getInt("quantity");
+                String unit = rs.getString("unit");
+                ingredients.add(new Ingredient(id, name, quantity, unit));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ingredients;
+    }
+    public static Ingredient displayIngredients(String ingredientName) {
+        Ingredient ingredient = new Ingredient(0, null, 0, null);;
+        String query = String.format("SELECT * FROM ingredients where name = \"%s\"", ingredientName);
+        try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(query);
+
+            int id = rs.getInt("id");
+            String name = rs.getString("name");
+            int quantity = rs.getInt("quantity");
+            String unit = rs.getString("unit");
+            ingredient = new Ingredient(id, name, quantity, unit);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ingredient;
+    }
+
 }

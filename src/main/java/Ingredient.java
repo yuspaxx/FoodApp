@@ -2,10 +2,10 @@ public class Ingredient {
 
     private int id;
     private String name;
-    private String quantity;
+    private int quantity;
     private String unit;
 
-    public Ingredient(int id, String name, String quantity, String unit) {
+    public Ingredient(int id, String name, int quantity, String unit) {
         this.id = id;
         this.name = name;
         this.quantity = quantity;
@@ -28,11 +28,11 @@ public class Ingredient {
         this.name = name;
     }
 
-    public String getQuantity() {
+    public int getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(String quantity) {
+    public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
 
@@ -44,13 +44,10 @@ public class Ingredient {
         this.unit = unit;
     }
 
-    @Override
+    @Override // updated ingredient display
     public String toString() {
-        return "Ingredient{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", quantity='" + quantity + '\'' +
-                ", unit='" + unit + '\'' +
-                '}';
+        return String.format("%-15s",name) + " - " + quantity + " " + unit;
     }
+
+
 }

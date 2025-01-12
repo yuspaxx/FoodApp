@@ -1,6 +1,8 @@
+import java.net.InterfaceAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
 
 public class MainController {
 
@@ -19,21 +21,33 @@ public class MainController {
     private static void runApplication() {
         while (true) {
             System.out.println("Welcome to the Recipe Finder!");
-            System.out.println("1. Search recipes by ingredients");
-            System.out.println("2. Search recipes by category");
-            System.out.println("3. Exit");
+            System.out.println("1. Show available recipes");
+            System.out.println("2. Search recipes by ingredients");
+            System.out.println("3. Search recipes by category");
+            System.out.println("4. Search every recipe");
+            System.out.println("5. Display ingredients");
+            System.out.println("6. Exit");
             System.out.print("Choose an option: ");
             int choice = scanner.nextInt();
             scanner.nextLine();
 
             switch (choice) {
                 case 1:
-                    searchRecipesByIngredients();
+                    searchRecipes();
                     break;
                 case 2:
-                    searchRecipesByCategory();
+                    searchRecipesByIngredients();
                     break;
                 case 3:
+                    searchRecipesByCategory();
+                    break;
+                case 4:
+                    searchRecipesByCategory();
+                    break;
+                case 5:
+                    displayIngredients();
+                    break;
+                case 6:
                     System.out.println("Goodbye!");
                     return;
                 default:
@@ -70,6 +84,54 @@ public class MainController {
         } else {
             displayRecipes(recipes);
         }
+    }
+
+    private static void displayIngredients() { // TODO - Move modify ingredients to RecipeDAO
+        System.out.print("Ingredients: \n");
+
+        List<Ingredient> ingredients = recipeDAO.displayIngredients();
+        if (ingredients.isEmpty()) {
+            System.out.println("No ingredients.");
+        } else {
+            for(int i = 0; i<ingredients.size();i++) {
+                System.out.println(ingredients.get(i));
+            }
+        }
+
+        System.out.print("Do you want to modify this list? (yes/no)\n");
+        String response = scanner.nextLine();
+        if(response.equals("y")||response.equals("yes")){
+            System.out.print("Enter ingredient name: ");
+            String name = scanner.nextLine();
+            Ingredient ingredient = recipeDAO.displayIngredients(name);
+            if(ingredient.getId()==0){
+                System.out.print("This ingredient is not used in any recipe.\n" +
+                        "Make sure you typed the right name before adding it to database.\n" +
+                        String.format("Do you still want to add %s to ingredient list?(yes/no)",name));
+                response = scanner.nextLine();
+                if(response.equals("y")||response.equals("yes")){
+                    System.out.print("Enter quantity and unit:");
+                    String data = scanner.nextLine();
+
+                    int quantity = Integer.parseInt(data.replaceAll("[^0-9]",""));
+                    data = data.replaceAll("[0-9]","");
+                    data = data.trim();
+                    if(data.equals("ml")||data.equals("l")||data.equals("kg")||data.equals("g")||data.equals("pieces")||data.equals("pcs")) {
+                        recipeDAO.insertIngredient(name, quantity, data);
+                    }
+                    else{
+                        System.out.println(String.format("Unknown unit type %s",data)+"available units: ml, l, kg, g, pieces, pcs"); // TODO - automatic conversion to unit (e.g. pieces to pcs)
+                    }
+                }
+
+            }
+            else {
+                System.out.print("Enter quantity: ");
+                int quantity = Integer.parseInt(scanner.nextLine());
+                recipeDAO.updateIngredient(name, quantity);
+            }
+        }
+
     }
 
     private static void displayRecipes(List<Recipe> recipes) {
