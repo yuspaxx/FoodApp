@@ -71,16 +71,28 @@ public class RecipeDAO {
         }
     }
 
-    public static void insertIngredient(String name, int quantity, String unit) {
-        String query = "insert into ingredients(name,quantity,unit) values(?, ?, ?)";
-        try (Connection conn = connect(); PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, name);
-            stmt.setInt(2, quantity);
-            stmt.setString(3, unit);
-            stmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+
+    public static void insertIngredient(String name, String data) {
+
+        int quantity = Integer.parseInt(data.replaceAll("[^0-9]","")); // get number from data
+        data = data.replaceAll("[0-9]",""); // remove numbers from data
+        data = data.trim(); // remove white spaces from data
+
+        if(data.equals("ml")||data.equals("l")||data.equals("kg")||data.equals("g")||data.equals("pieces")||data.equals("pcs")) {
+            String query = "insert into ingredients(name,quantity,unit) values(?, ?, ?)";
+            try (Connection conn = connect(); PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, name);
+                stmt.setInt(2, quantity);
+                stmt.setString(3, data);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
+        else{
+            System.out.println(String.format("Unknown unit type %s",data)+"available units: ml, l, kg, g, pieces, pcs"); // TODO - automatic conversion to unit (e.g. pieces to pcs)
+        }
+
     }
 
     public static void updateIngredient(String name, int quantity) {
@@ -92,6 +104,36 @@ public class RecipeDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public static List<Recipe> searchRecipes(){
+        List<Recipe> recipes = new ArrayList<>();
+        String query = "SELECT r.id, r.name, r.category " +
+                "FROM recipes r JOIN recipes_ingredients ri " +
+                "ON r.id = ri.recipe_id JOIN ingredients i " +
+                "ON ri.ingredient_id = i.id " +
+                "WHERE i.quantity >= ri.quantity " +
+                "GROUP BY r.id, r.name, r.category " +
+                "HAVING COUNT(ri.ingredient_id) = ( " +
+                    "SELECT COUNT(*) " +
+                    "FROM recipes_ingredients " +
+                    "WHERE recipe_id = r.id " +
+                ");";
+
+        try (Connection conn = connect(); PreparedStatement stmt = conn.prepareStatement(query)) {
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                int recipeId = rs.getInt("id");
+                String name = rs.getString("name");
+                String category = rs.getString("category");
+                String instructions = rs.getString("instructions");
+                List<Ingredient> ingredients = getIngredientsForRecipe(recipeId);
+                recipes.add(new Recipe(recipeId, name, category, instructions, ingredients));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return recipes;
     }
 
     public static List<Ingredient> getIngredientsForRecipe(int recipeId) {
@@ -183,7 +225,17 @@ public class RecipeDAO {
         }
         return recipes;
     }
-
+    public static int getLastRecipeID(){
+        String query = "SELECT seq FROM sqlite_sequence where name=\"recipes\"";
+        int id = 0;
+        try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(query);
+            id = rs.getInt("seq");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return id;
+    }
     public static List<Recipe> getAllRecipes() {
         List<Recipe> recipes = new ArrayList<>();
         String query = "SELECT * FROM recipes";
@@ -201,6 +253,42 @@ public class RecipeDAO {
             e.printStackTrace();
         }
         return recipes;
+    }
+    public static Recipe getRecipe(String name) {
+        Recipe recipe=new Recipe(0, null, null, null, null);
+        String query = "SELECT * FROM recipes where name = ?";
+        try (Connection conn = connect(); PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, name);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String category = rs.getString("category");
+                String instructions = rs.getString("instructions");
+                List<Ingredient> ingredients = getIngredientsForRecipe(id);
+                recipe = new Recipe(id, name, category, instructions, ingredients);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return recipe;
+    }
+    public static Recipe getRecipe(int id) {
+        Recipe recipe=new Recipe(0, null, null, null, null);
+        String query = "SELECT * FROM recipes where id = ?";
+        try (Connection conn = connect(); PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String name = rs.getString("name");
+                String category = rs.getString("category");
+                String instructions = rs.getString("instructions");
+                List<Ingredient> ingredients = getIngredientsForRecipe(id);
+                recipe = new Recipe(id, name, category, instructions, ingredients);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return recipe;
     }
 
     public static List<Ingredient> displayIngredients() {
@@ -220,8 +308,8 @@ public class RecipeDAO {
         }
         return ingredients;
     }
-    public static Ingredient displayIngredients(String ingredientName) {
-        Ingredient ingredient = new Ingredient(0, null, 0, null);;
+    public static Ingredient displayIngredients(String ingredientName) { // display one ingredient
+        Ingredient ingredient = new Ingredient(0, null, 0, null);
         String query = String.format("SELECT * FROM ingredients where name = \"%s\"", ingredientName);
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery(query);
