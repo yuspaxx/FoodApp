@@ -1,3 +1,4 @@
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -28,16 +29,20 @@ public class MainController {
             System.out.println("5. Add new recipe");
             System.out.println("6. Exit");
             System.out.print("Choose an option: ");
-            int choice = 0;
+
+            String choice = scanner.next();
+            scanner.nextLine();
+
+            int ichoice=0;
             try {
-                choice = scanner.nextInt();
-                scanner.nextLine();
+                ichoice = Integer.parseInt(choice);
+
             }
             catch(Exception e){
-                System.out.print("Type numeric value!");
-                choice = 0;
+                System.out.print("Type numeric value!\n");
+                ichoice = 0;
             }
-            switch (choice) {
+            switch (ichoice) {
                 case 1:
                     showRandomRecipe();
                     break;
@@ -58,6 +63,7 @@ public class MainController {
                     exit = true;
                 default:
                     System.out.println("Invalid option. Please try again.");
+                    pressEnterToContinue();
             }
             clearConsole();
         }
@@ -207,6 +213,11 @@ public class MainController {
             }
         }
 
+    }
+    private static void pressEnterToContinue()
+    {
+        System.out.println("Press Enter key to continue...");
+        scanner.nextLine();
     }
 
 }
