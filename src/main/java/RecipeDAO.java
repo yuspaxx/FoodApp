@@ -105,7 +105,7 @@ public class RecipeDAO {
 
     public static List<Recipe> searchRecipes(){
         List<Recipe> recipes = new ArrayList<>();
-        String query = "SELECT r.id, r.name, r.category " +
+        String query = "SELECT r.id, r.name, r.category, r.instructions " +
                 "FROM recipes r JOIN recipes_ingredients ri " +
                 "ON r.id = ri.recipe_id JOIN ingredients i " +
                 "ON ri.ingredient_id = i.id " +
@@ -311,7 +311,7 @@ public class RecipeDAO {
         try (Connection conn = connect(); PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, ingredientName);
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
+            if (rs!=null) {
                 int id = rs.getInt("id");
                 String name = rs.getString("name");
                 int quantity = rs.getInt("quantity");
