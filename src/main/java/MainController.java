@@ -177,8 +177,8 @@ public class MainController {
         if (ingredients.isEmpty()) {
             System.out.println("No ingredients.");
         } else {
-            for(int i = 0; i<ingredients.size();i++) {
-                System.out.println(ingredients.get(i));
+            for (Ingredient ingredient : ingredients) {
+                System.out.println(ingredient);
             }
         }
 

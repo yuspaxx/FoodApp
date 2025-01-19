@@ -58,12 +58,16 @@ public class Recipe {
 
     @Override
     public String toString() {
-        return "Recipe{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", category='" + category + '\'' +
-                ", instructions='" + instructions + '\'' +
-                ", ingredients=" + ingredients +
-                '}';
+        StringBuilder string = new StringBuilder("        "+name + " , " + category + "\n" + "Ingredients:\n");
+        for(Ingredient ingredients: ingredients) {
+            string.append(ingredients.toString()).append('\n');
+        }
+        string.append("\nInstructions:\n'");
+        String[] instructionList = instructions.split("[.]");
+        for(String instruction: instructionList){
+            string.append(instruction).append('.').append("\n");
+        }
+        string.append('\n');
+        return string.toString();
     }
 }
