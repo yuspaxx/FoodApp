@@ -67,7 +67,7 @@ public class MainController {
 
     private static void searchRecipesByIngredients() {
         clearConsole();
-        System.out.print("Enter ingredients (separated by commas): ");
+        System.out.print("Enter ingredients (separated by commas, with a capital letter.): ");
         String input = scanner.nextLine();
         String[] ingredientsArray = input.split(",");
         List<String> ingredientsList = new ArrayList<>();
@@ -85,7 +85,7 @@ public class MainController {
 
     private static void searchRecipesByCategory() {
         clearConsole();
-        System.out.print("Enter recipe category (e.g., vegetarian, dessert): ");
+        System.out.print("Enter recipe category (e.g., Vegetarian, Dessert) with a capital letter: ");
         String category = scanner.nextLine();
         List<Recipe> recipes = recipeDAO.getRecipesByCategory(category);
         if (recipes.isEmpty()) {
