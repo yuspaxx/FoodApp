@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
 public class MainController {
@@ -19,20 +20,18 @@ public class MainController {
     private static void runApplication() {
         while (true) {
             System.out.println("Welcome to the Recipe Finder!");
-            System.out.println("1. Show available recipes");
-            System.out.println("2. Search recipes by ingredients");
-            System.out.println("3. Search recipes by category");
-            System.out.println("4. Show all recipes");
-            System.out.println("5. Add new recipe");
-            System.out.println("6. Display ingredients");
-            System.out.println("7. Exit");
+            System.out.println("1. Random recipe");
+            System.out.println("2. Search recipe by ingredients");
+            System.out.println("3. Search recipe by category");
+            System.out.println("4. Add new recipe");
+            System.out.println("5. Exit");
             System.out.print("Choose an option: ");
             int choice = scanner.nextInt();
             scanner.nextLine();
 
             switch (choice) {
                 case 1:
-                    searchRecipes();
+                    showRandomRecipe();
                     break;
                 case 2:
                     searchRecipesByIngredients();
@@ -41,15 +40,9 @@ public class MainController {
                     searchRecipesByCategory();
                     break;
                 case 4:
-                    showAllRecipes();
-                    break;
-                case 5:
                     addNewRecipe();
                     break;
-                case 6:
-                    displayIngredients();
-                    break;
-                case 7:
+                case 5:
                     System.out.println("Goodbye!");
                     return;
                 default:
@@ -59,14 +52,15 @@ public class MainController {
         }
     }
 
-    private static void searchRecipes() {
+    private static void showRandomRecipe() {
         clearConsole();
-        System.out.print("Recipes you can use: ");
-        List<Recipe> recipes = recipeDAO.searchRecipes();
+        List<Recipe> recipes = recipeDAO.getAllRecipes();
         if (recipes.isEmpty()) {
-            System.out.println("No recipes found, here are some recipes with some ingredients missing.");
+            System.out.println("No recipes available.");
         } else {
-            displayRecipes(recipes);
+            Random random = new Random();
+            Recipe randomRecipe = recipes.get(random.nextInt(recipes.size()));
+            displayRecipe(randomRecipe);
         }
         postOperationMenu();
     }
@@ -83,7 +77,6 @@ public class MainController {
         List<Recipe> recipes = recipeDAO.searchRecipesByIngredients(ingredientsList);
         if (recipes.isEmpty()) {
             System.out.println("No recipes found with these ingredients.");
-            suggestAlternativeRecipes(ingredientsList);
         } else {
             displayRecipes(recipes);
         }
@@ -103,59 +96,23 @@ public class MainController {
         postOperationMenu();
     }
 
-    private static void showAllRecipes() {
-        clearConsole();
-        System.out.println("All Recipes:");
-        List<Recipe> recipes = recipeDAO.getAllRecipes();
-        if (recipes.isEmpty()) {
-            System.out.println("No recipes available.");
-        } else {
-            displayRecipes(recipes);
-        }
-        postOperationMenu();
-    }
-
     public static void addNewRecipe() {
         clearConsole();
         System.out.print("Enter recipe name (leave empty to cancel): ");
-        String recipe_name = scanner.nextLine();
-        if (!recipe_name.isEmpty()) {
-            Recipe recipe = recipeDAO.getRecipe(recipe_name);
+        String recipeName = scanner.nextLine();
+        if (!recipeName.isEmpty()) {
+            Recipe recipe = recipeDAO.getRecipe(recipeName);
             String response = "yes";
             if (recipe.getName() != null) {
                 System.out.println("Recipe with this name already exists.");
-                displayRecipes(recipe);
+                displayRecipe(recipe);
                 System.out.println("Do you still want to add it? (yes/no)");
                 response = scanner.nextLine();
             }
             if (response.equals("y") || response.equals("yes")) {
                 System.out.print("Enter category: ");
                 String category = scanner.nextLine();
-                String name;
-                do {
-                    System.out.println("Enter ingredients used in recipe (leave empty to stop): ");
-                    name = scanner.nextLine();
-                    Ingredient ingredient = recipeDAO.displayIngredients(name);
-                    if (ingredient.getId() == 0) {
-                        System.out.print("This ingredient is not used in any other recipe.\n" +
-                                "Make sure you typed the right name before adding it to database.\n" +
-                                String.format("Do you still want to add %s to ingredient list? (yes/no)", name));
-                        response = scanner.nextLine();
-                        if (response.equals("y") || response.equals("yes")) {
-                            System.out.print("Enter quantity and unit:");
-                            String data = scanner.nextLine();
-                            String newIngredient = data.replaceAll("[0-9]", "0");
-                            recipeDAO.insertIngredient(name, newIngredient);
-                            data = data.replaceAll("[^0-9]", "");
-                            int quantity = Integer.parseInt(data);
-                            recipeDAO.insertRecipeIngredients(recipeDAO.getLastRecipeID() + 1, recipeDAO.displayIngredients(name).getId(), quantity);
-                        }
-                    } else {
-                        System.out.print(String.format("Enter quantity in %s: ", ingredient.getUnit()));
-                        int quantity = Integer.parseInt(scanner.nextLine());
-                        recipeDAO.insertRecipeIngredients(recipeDAO.getLastRecipeID() + 1, recipeDAO.displayIngredients(name).getId(), quantity);
-                    }
-                } while (!name.isEmpty());
+
                 StringBuilder instructions = new StringBuilder();
                 String input;
                 System.out.print("Enter instructions step by step (leave empty to finish): ");
@@ -163,44 +120,8 @@ public class MainController {
                     input = scanner.nextLine();
                     instructions.append(input);
                 } while (!input.isEmpty());
-                recipeDAO.insertRecipe(recipe_name, category, instructions.toString());
-            }
-        }
-        postOperationMenu();
-    }
 
-    private static void displayIngredients() {
-        clearConsole();
-        System.out.print("Ingredients: \n");
-        List<Ingredient> ingredients = recipeDAO.displayIngredients();
-        if (ingredients.isEmpty()) {
-            System.out.println("No ingredients.");
-        } else {
-            for (Ingredient ingredient : ingredients) {
-                System.out.println(ingredient);
-            }
-        }
-
-        System.out.print("Do you want to modify this list? (yes/no)\n");
-        String response = scanner.nextLine();
-        if (response.equals("y") || response.equals("yes")) {
-            System.out.print("Enter ingredient name: ");
-            String name = scanner.nextLine();
-            Ingredient ingredient = recipeDAO.displayIngredients(name);
-            if (ingredient.getId() == 0) {
-                System.out.print("This ingredient is not used in any recipe.\n" +
-                        "Make sure you typed the right name before adding it to database.\n" +
-                        String.format("Do you still want to add %s to ingredient list? (yes/no)", name));
-                response = scanner.nextLine();
-                if (response.equals("y") || response.equals("yes")) {
-                    System.out.print("Enter quantity and unit:");
-                    String data = scanner.nextLine();
-                    recipeDAO.insertIngredient(name, data);
-                }
-            } else {
-                System.out.print("Enter quantity: ");
-                int quantity = Integer.parseInt(scanner.nextLine());
-                recipeDAO.updateIngredient(name, quantity);
+                recipeDAO.insertRecipe(recipeName, category, instructions.toString());
             }
         }
         postOperationMenu();
@@ -230,30 +151,11 @@ public class MainController {
     private static void displayRecipes(List<Recipe> recipes) {
         System.out.println("Found recipes:");
         for (Recipe recipe : recipes) {
-            System.out.println(recipe);
+            displayRecipe(recipe);
         }
     }
 
-    private static void displayRecipes(Recipe recipe) {
+    private static void displayRecipe(Recipe recipe) {
         System.out.println(recipe);
-    }
-
-    private static void suggestAlternativeRecipes(List<String> ingredientsList) {
-        System.out.println("Here are some suggestions with missing ingredients:");
-        List<Recipe> recipes = recipeDAO.getAllRecipes();
-        for (Recipe recipe : recipes) {
-            if (!containsIngredients(recipe, ingredientsList)) {
-                System.out.println(recipe);
-            }
-        }
-    }
-
-    private static boolean containsIngredients(Recipe recipe, List<String> ingredientsList) {
-        for (Ingredient ingredient : recipe.getIngredients()) {
-            if (!ingredientsList.contains(ingredient.getName())) {
-                return false;
-            }
-        }
-        return true;
     }
 }
