@@ -148,12 +148,24 @@ public class MainController {
         System.out.println("1. Back to menu");
         System.out.println("2. Exit");
         System.out.print("Choose an option: ");
-        int choice = scanner.nextInt();
+        String choice = scanner.next();
         scanner.nextLine();
-        if (choice == 1) {
+
+        int ichoice=0;
+        try {
+            ichoice = Integer.parseInt(choice);
+
+        }
+        catch(Exception e){
+            System.out.print("Type numeric value!\n");
+            pressEnterToContinue();
+            ichoice = 0;
+        }
+
+        if (ichoice == 1) {
             clearConsole();
             runApplication();
-        } else if (choice == 2) {
+        } else if (ichoice == 2) {
             System.out.println("Goodbye!");
             System.exit(0);
         }
@@ -208,8 +220,17 @@ public class MainController {
             }
             else {
                 System.out.print("Enter quantity: ");
-                int quantity = Integer.parseInt(scanner.nextLine());
-                recipeDAO.updateIngredient(name, quantity);
+                String quantity = scanner.nextLine();
+                int iquantity=0;
+                try {
+                    iquantity = Integer.parseInt(quantity);
+                    recipeDAO.updateIngredient(name, iquantity);
+                }
+                catch(Exception e) {
+                    System.out.print("Type numeric value!\n");
+                    pressEnterToContinue();
+                    iquantity = 0;
+                }
             }
         }
 
